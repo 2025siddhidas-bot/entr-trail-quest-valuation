@@ -102,8 +102,8 @@ tabs = st.tabs(['Dashboard', 'Inputs', 'Market', 'Adoption', 'Revenue', 'Costs &
 # ================================================================ INPUTS
 with tabs[1]:
     st.header('Inputs')
-    st.markdown('Fill in the numbers you have found. **Bear / Base / Bull** are three versions of success: smaller, solid and Pokemon Go-scale. '
-                'Type percentages as plain numbers (25 means 25%). **Status** says how solid the number is: SOURCED (from a published source), PROXY-BASED (taken from a similar game), PLACEHOLDER (our guess, please replace), DECISION (our choice).')
+    st.markdown('**Bear / Base / Bull** are three versions of success: smaller, solid and Pokemon Go-scale. '
+                '**Status** says how solid the number is: SOURCED (from a published source), PROXY-BASED (taken from a similar game), PLACEHOLDER (our guess, please replace), DECISION (our choice).')
     ptabs = st.tabs([PARTS[p] for p in range(1, 6)] + ['Merge teammate files', 'Built-in assumptions'])
     for pi, p in enumerate(range(1, 6)):
         with ptabs[pi]:
@@ -173,13 +173,13 @@ with tabs[0]:
     st.header('What is Trail Quest worth?')
     if fails: st.error('Something in the inputs does not add up: ' + '; '.join(fails))
     with st.container(border=True):
-        st.markdown('**Valuation method: the VC method** (how venture investors usually value a young company)')
-        st.markdown('Investors ask: *what could this company be sold for in 5 years, and what is it worth today so that I earn the return I expect?* '
+        st.markdown('**Valuation method: the VC method** (based on how venture investors usually value a young company)')
+        st.markdown('Based on answering *what could this company be sold for in 5 years, and what is it worth today so that I earn the return I expect?* '
                     'So we (1) forecast our revenue in year 5, (2) multiply it by what similar companies sell for as a multiple of yearly revenue, '
                     '(3) take off the share that future investors will own, and (4) scale the result back to today at the return investors expect (60% a year). '
                     'The 60% already covers the risk that the company fails, so each case below describes the company **succeeding**, not failing.')
         st.markdown('**What the forecast is anchored to:** Pokemon Go at its peak (232M monthly users in 2016, about 8.9% of the world\'s mobile gamers, and roughly US$1B of revenue that year). '
-                    'Bull = Trail Quest reaches that same share of gamers in Hong Kong and the other Asian markets. Base and Bear reach a smaller share.')
+                    'Bull = Trail Quest reaches the 8.9% share of gamers in Hong Kong and the other Asian markets. Base and Bear reach a smaller share.')
     st.caption('Bear = smaller success, Base = solid success, Bull = Pokemon Go-scale success. Numbers use placeholder inputs until the team fills in the Inputs tab.')
     c = st.columns(3)
     for i, n in enumerate(M.SCN):
@@ -189,8 +189,6 @@ with tabs[0]:
                 st.markdown(f'**{n}**')
                 st.metric('Company value today (US$)', usdm(v['post1'], inputs['g_fx'][1]))
                 st.caption(f"HK${money(v['post1'])}  \nRevenue in year 5: {usdm(v['rev5'], inputs['g_fx'][1])}  \nActive users in year 5: {money(v['mau5'])}  \nBest month in Hong Kong: {S[i]['monthly'].mau_hk.max() / (S[i]['market']['eligpop'] * S[i]['market']['phone'] * S[i]['market']['reachA']):.1%} of gamers (Pokemon Go peak: 8.9%)")
-    if any(S[i]['val']['post1'] < inputs['g_raise'][1] for i in range(3)):
-        st.warning(f"Where the company value is below the {usdm(inputs['g_raise'][1], inputs['g_fx'][1])} we plan to raise, that case does not support the raise.")
     g1, g2 = st.columns(2)
     f = fig('Revenue by year (HK$)')
     for i, n in enumerate(M.SCN): f.add_bar(x=YEARS, y=S[i]['annual'].revenue[1:NY + 1], name=n, marker_color=COL[n])
