@@ -36,9 +36,9 @@ def main():
     print('\nChecks with FAIL:', [c['check'] for c in out['checks'] if 'FAIL' in (c['Bear'], c['Base'], c['Bull'])] or 'none')
     if a.out:
         with pd.ExcelWriter(a.out, engine='openpyxl') as xw:
-            t.to_excel(xw, 'Summary')
+            t.to_excel(xw, sheet_name='Summary')
             for i, n in enumerate(M.SCN):
-                out['scn'][i]['annual'].T.to_excel(xw, f'Annual_{n}'); out['scn'][i]['monthly'].to_excel(xw, f'Monthly_{n}', index=False)
+                out['scn'][i]['annual'].T.to_excel(xw, sheet_name=f'Annual_{n}'); out['scn'][i]['monthly'].to_excel(xw, sheet_name=f'Monthly_{n}', index=False)
         print('wrote', a.out)
 
 
