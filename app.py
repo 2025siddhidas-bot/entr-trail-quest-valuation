@@ -30,8 +30,6 @@ SHOWN = {
     # Part 2
     'm_gamer': ('% of people who play mobile or video games', '%'),
     'm_int_a': ('...of those, % who would play a hiking game just for the game', '%'),
-    'm_comm': ('% of people who want company for active or social outings', '%'),
-    'm_int_b': ('...of those, % who would join through a game (play together, keep in touch)', '%'),
     'm_hiker': ('% of people who already hike', '%'),
     'm_intend': ('% of non-hikers who want to start hiking', '%'),
     'm_int_c': ('...of hikers and would-be hikers, % who would use it for trail info alone', '%'),
@@ -103,7 +101,7 @@ tabs = st.tabs(['Dashboard', 'Inputs', 'Market', 'Adoption', 'Revenue', 'Costs &
 with tabs[1]:
     st.header('Inputs')
     st.markdown('**Bear / Base / Bull** are three versions of success: smaller, solid and Pokemon Go-scale. '
-                '**Status** says how solid the number is: SOURCED (from a published source), PROXY-BASED (taken from a similar game), PLACEHOLDER (our guess, please replace), DECISION (our choice).')
+                '**Status** says how solid the number is: SOURCED (from a published source), PROXY-BASED (taken from a similar game), ASSUMPTION (our guess, please replace), DECISION (our choice).')
     ptabs = st.tabs([PARTS[p] for p in range(1, 6)] + ['Merge teammate files', 'Built-in assumptions'])
     for pi, p in enumerate(range(1, 6)):
         with ptabs[pi]:
@@ -152,7 +150,7 @@ with tabs[1]:
                     n += 1
             st.session_state.ver += 1; st.success(f'Merged {n} rows.' + (f' Skipped unknown keys: {sorted(set(unk))}' if unk else '')); st.rerun()
     with ptabs[6]:
-        st.markdown('These are fixed in the model so the team does not have to fill them in. They come from the real games we use as comparisons (Pokemon Go, Pikmin Bloom, Monster Hunter Now) or from standard industry figures. Read-only.')
+        st.markdown('These are fixed in the model so the team does not have to fill them in. They come from the real games we use as comparisons (Pokemon Go, Pikmin Bloom, Monster Hunter Now) or from standard industry figures.')
         hid = [r for r in M.ROWS if r['key'] not in SHOWN and r['key'] not in ('g_exit', 'p_w') and not r['key'].startswith('sc_') and not r['key'].startswith('v5_')]
         hd = pd.DataFrame({'Assumption': [r['label'] for r in hid], 'Unit': [r['unit'] for r in hid], 'Bear': [disp(r, inputs[r['key']][0]) for r in hid], 'Base': [disp(r, inputs[r['key']][1]) for r in hid], 'Bull': [disp(r, inputs[r['key']][2]) for r in hid], 'Source': [r['source'] for r in hid]})
         st.dataframe(hd, hide_index=True, use_container_width=True)
@@ -173,13 +171,13 @@ with tabs[0]:
     st.header('What is Trail Quest worth?')
     if fails: st.error('Something in the inputs does not add up: ' + '; '.join(fails))
     with st.container(border=True):
-        st.markdown('**Valuation method: the VC method** (based on how venture investors usually value a young company)')
+        st.markdown('**Valuation method: the VC method** (how venture investors usually value a young company)')
         st.markdown('Based on answering *what could this company be sold for in 5 years, and what is it worth today so that I earn the return I expect?* '
                     'So we (1) forecast our revenue in year 5, (2) multiply it by what similar companies sell for as a multiple of yearly revenue, '
                     '(3) take off the share that future investors will own, and (4) scale the result back to today at the return investors expect (60% a year). '
                     'The 60% already covers the risk that the company fails, so each case below describes the company **succeeding**, not failing.')
         st.markdown('**What the forecast is anchored to:** Pokemon Go at its peak (232M monthly users in 2016, about 8.9% of the world\'s mobile gamers, and roughly US$1B of revenue that year). '
-                    'Bull = Trail Quest reaches the 8.9% share of gamers in Hong Kong and the other Asian markets. Base and Bear reach a smaller share.')
+                    'Bull: in its best month, Trail Quest gets 8.9% of mobile gamers in Hong Kong to play. The same uptake per person is assumed in Taiwan, Japan, Korea, Singapore and the Greater Bay Area. Base and Bear: the same idea, but a smaller share of gamers. Base reaches 7.5% in Hong Kong and Bear 6%.')
     st.caption('Bear = smaller success, Base = solid success, Bull = Pokemon Go-scale success. Numbers use placeholder inputs until the team fills in the Inputs tab.')
     c = st.columns(3)
     for i, n in enumerate(M.SCN):
@@ -189,6 +187,7 @@ with tabs[0]:
                 st.markdown(f'**{n}**')
                 st.metric('Company value today (US$)', usdm(v['post1'], inputs['g_fx'][1]))
                 st.caption(f"HK${money(v['post1'])}  \nRevenue in year 5: {usdm(v['rev5'], inputs['g_fx'][1])}  \nActive users in year 5: {money(v['mau5'])}  \nBest month in Hong Kong: {S[i]['monthly'].mau_hk.max() / (S[i]['market']['eligpop'] * S[i]['market']['phone'] * S[i]['market']['reachA']):.1%} of gamers (Pokemon Go peak: 8.9%)")
+   
     g1, g2 = st.columns(2)
     f = fig('Revenue by year (HK$)')
     for i, n in enumerate(M.SCN): f.add_bar(x=YEARS, y=S[i]['annual'].revenue[1:NY + 1], name=n, marker_color=COL[n])
@@ -205,26 +204,26 @@ with tabs[0]:
             t[n] = [money(v['rev5']), f"{v['mult']:.1f}x", money(v['ev1']), f"{v['dil']:.0%}", money(v['ev1'] * (1 - v['dil'])), f"{(1 + v['irr']) ** v['exit_year']:.1f}x", money(v['post1']), usdm(v['post1'], inputs['g_fx'][1])]
         st.dataframe(t, hide_index=True, use_container_width=True)
     ph = [meta[r['key']]['status'] for r in M.ROWS if r['key'] in SHOWN]
-    share = ph.count('PLACEHOLDER') / len(ph)
-    st.progress(1 - share, text=f'{ph.count("PLACEHOLDER")} of {len(ph)} inputs are still placeholders ({1 - share:.0%} have a source or come from a similar game)')
+    share = ph.count('ASSUMPTION') / len(ph)
+    st.progress(1 - share, text=f'{ph.count("ASSUMPTION")} of {len(ph)} inputs are still placeholders ({1 - share:.0%} have a source or come from a similar game)')
 
 # ================================================================ MARKET
 with tabs[2]:
     st.header('How many people could use the app?')
-    st.markdown('You do not need to hike to use Trail Quest. Three groups could use it: **players** (people who like the game), **community-seekers** (people who want company for outings) and **planners** (hikers who want trail info).')
+    st.markdown('You do not need to be a hiker or hiking enthusiast to use trail quest. Three groups are likely to use trail quest: **players** (people who like the game), **community-seekers** (people who want company for outings) and **planners** (hikers who want trail info).')
     c1, c2 = st.columns(2)
     f = fig('From everyone who could use it to people we can reach (people)')
     for i, n in enumerate(M.SCN): f.add_bar(x=['Everyone who could use it', 'People who would actually use it', 'Installs we can reach in 5 years'], y=[S[i]['market'][k] for k in ('tam', 'sam', 'som')], name=n, marker_color=COL[n])
     c1.plotly_chart(f, use_container_width=True)
     f = fig('Who would actually use it, by group (people)')
-    for nm, k, cc in (('Players', 'poolA', '#7030A0'), ('Community-seekers', 'poolB', '#ED7D31'), ('Planners', 'poolC', '#70AD47')): f.add_bar(x=M.SCN, y=[S[i]['market'][k] for i in range(3)], name=nm, marker_color=cc)
+    for nm, k, cc in (('Players', 'poolA', '#7030A0'), ('Planners', 'poolC', '#70AD47')): f.add_bar(x=M.SCN, y=[S[i]['market'][k] for i in range(3)], name=nm, marker_color=cc)
     f.update_layout(barmode='stack'); c2.plotly_chart(f, use_container_width=True)
     m = S[sidx]['market']
     st.markdown(f"**{detail} case in words:** of {m['pop']:,.0f} people in Hong Kong, about **{m['tam']:,.0f}** could use the app (TAM). About **{m['sam']:,.0f}** would actually use it (SAM). "
                 f"We aim to reach about **{m['som']:,.0f}** of them as installs over 5 years (SOM), starting with about **{m['m0']:,.0f}** in the launch month.")
     with st.expander('Detailed numbers'):
-        labels = [('pop', 'Hong Kong population', 'int'), ('eligpop', 'Aged 12 and over', 'int'), ('phone', 'Smartphone users (share)', 'pct'), ('reachA', 'Play games', 'pct'), ('reachB', 'Want company for outings', 'pct'), ('reachC', 'Hike or want to hike', 'pct'),
-                  ('tam', 'Everyone who could use it (TAM)', 'int'), ('poolA', 'Would use it: players', 'int'), ('poolB', 'Would use it: community-seekers', 'int'), ('poolC', 'Would use it: planners', 'int'), ('poolsum', 'People counted in more than one group', 'int'),
+        labels = [('pop', 'Hong Kong population', 'int'), ('eligpop', 'Aged 12 and over', 'int'), ('phone', 'Smartphone users (share)', 'pct'), ('reachA', 'Play games', 'pct'), ('reachC', 'Hike or want to hike', 'pct'),
+                  ('tam', 'Everyone who could use it (TAM)', 'int'), ('poolA', 'Would use it: players', 'int'), ('poolC', 'Would use it: planners', 'int'), ('poolsum', 'People counted in more than one group', 'int'),
                   ('sam', 'People who would actually use it (SAM)', 'int'), ('som', 'Installs we can reach in 5 years (SOM)', 'int'), ('m0', 'Installs in the launch month', 'int')]
         mt = pd.DataFrame({'': [l for _, l, _ in labels], **{n: [(f"{S[i]['market'][k]:.1%}" if f_ == 'pct' else f"{S[i]['market'][k]:,.0f}") for k, _, f_ in labels] for i, n in enumerate(M.SCN)}})
         st.dataframe(mt, hide_index=True, use_container_width=True)
@@ -251,7 +250,7 @@ with tabs[3]:
 
 # ================================================================ REVENUE
 with tabs[4]:
-    st.header('Where does the money come from?')
+    st.header('Revenue projections & dynamics')
     st.markdown('**Ads:** brands pay each time a user clicks their ad on a trail. **In-app purchases:** some users pay for extras in the game. **Partnerships:** tourism bodies or brands pay a yearly fee. **Other markets:** the same app launched later in Taiwan and elsewhere.')
     A = S[sidx]['annual']
     c1, c2 = st.columns(2)
@@ -287,12 +286,12 @@ with tabs[5]:
 
 # ================================================================ EVIDENCE
 with tabs[6]:
-    st.header('Evidence: the real games and data behind the defaults')
+    st.header('Evidence (from other games as proxy)')
     fit = PXD.FITTED
     st.subheader('Real games we compare against')
     sn = pd.DataFrame([{'Game': n, 'Monthly revenue (US$)': r, 'Downloads in Oct 2026': d, 'Hong Kong share of downloads': s} for n, r, d, s in PXD.SNAPSHOT])
     st.dataframe(sn.style.format({'Monthly revenue (US$)': '{:,.0f}', 'Downloads in Oct 2026': '{:,.0f}', 'Hong Kong share of downloads': '{:.1%}'}, na_rep='n/a'), hide_index=True, use_container_width=True)
-    st.caption('Source: AppMagic, Oct 2026, revenue after app-store fees. One month only, so treat as a rough run-rate.')
+    st.caption('Source: AppMagic, Oct 2026, revenue after app-store fees.')
     st.subheader('How fast real games lose users')
     st.dataframe(pd.DataFrame(PXD.RETENTION, columns=['Benchmark', 'Day 1', 'Day 7', 'Day 30', 'Source']).style.format({'Day 1': '{:.1%}', 'Day 7': '{:.1%}', 'Day 30': '{:.1%}'}, na_rep='-'), hide_index=True, use_container_width=True)
     st.subheader('Sale multiples of similar companies')
@@ -306,8 +305,8 @@ with tabs[7]:
     st.header('Export')
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine='openpyxl') as xw:
-        pd.DataFrame({n: {'Company value today (HK$)': S[i]['val']['post1'], 'Company value today (US$)': S[i]['val']['post1'] / inputs['g_fx'][1], 'Revenue in year 5 (HK$)': S[i]['val']['rev5'], 'Active users in year 5': S[i]['val']['mau5']} for i, n in enumerate(M.SCN)}).to_excel(xw, sheet_name='Summary')
-        pd.DataFrame([{'key': r['key'], 'parameter': r['label'], 'unit': r['unit'], 'bear': disp(r, inputs[r['key']][0]), 'base': disp(r, inputs[r['key']][1]), 'bull': disp(r, inputs[r['key']][2]), 'status': meta[r['key']]['status'], 'source': r['source']} for r in M.ROWS]).to_excel(xw, sheet_name='Inputs', index=False)
+        pd.DataFrame({n: {'Company value today (HK$)': S[i]['val']['post1'], 'Company value today (US$)': S[i]['val']['post1'] / inputs['g_fx'][1], 'Revenue in year 5 (HK$)': S[i]['val']['rev5'], 'Active users in year 5': S[i]['val']['mau5']} for i, n in enumerate(M.SCN)}).to_excel(xw, 'Summary')
+        pd.DataFrame([{'key': r['key'], 'parameter': r['label'], 'unit': r['unit'], 'bear': disp(r, inputs[r['key']][0]), 'base': disp(r, inputs[r['key']][1]), 'bull': disp(r, inputs[r['key']][2]), 'status': meta[r['key']]['status'], 'source': r['source']} for r in M.ROWS]).to_excel(xw, 'Inputs', index=False)
         for i, n in enumerate(M.SCN):
-            S[i]['annual'].T.to_excel(xw, sheet_name=f'Annual_{n}'); S[i]['monthly'].to_excel(xw, sheet_name=f'Monthly_{n}', index=False)
+            S[i]['annual'].T.to_excel(xw, f'Annual_{n}'); S[i]['monthly'].to_excel(xw, f'Monthly_{n}', index=False)
     st.download_button('Download results (Excel)', buf.getvalue(), 'trailquest_results.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
