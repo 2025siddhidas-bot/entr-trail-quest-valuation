@@ -305,8 +305,8 @@ with tabs[7]:
     st.header('Export')
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine='openpyxl') as xw:
-        pd.DataFrame({n: {'Company value today (HK$)': S[i]['val']['post1'], 'Company value today (US$)': S[i]['val']['post1'] / inputs['g_fx'][1], 'Revenue in year 5 (HK$)': S[i]['val']['rev5'], 'Active users in year 5': S[i]['val']['mau5']} for i, n in enumerate(M.SCN)}).to_excel(xw, 'Summary')
-        pd.DataFrame([{'key': r['key'], 'parameter': r['label'], 'unit': r['unit'], 'bear': disp(r, inputs[r['key']][0]), 'base': disp(r, inputs[r['key']][1]), 'bull': disp(r, inputs[r['key']][2]), 'status': meta[r['key']]['status'], 'source': r['source']} for r in M.ROWS]).to_excel(xw, 'Inputs', index=False)
+        pd.DataFrame({n: {'Company value today (HK$)': S[i]['val']['post1'], 'Company value today (US$)': S[i]['val']['post1'] / inputs['g_fx'][1], 'Revenue in year 5 (HK$)': S[i]['val']['rev5'], 'Active users in year 5': S[i]['val']['mau5']} for i, n in enumerate(M.SCN)}).to_excel(xw, sheet_name='Summary')
+        pd.DataFrame([{'key': r['key'], 'parameter': r['label'], 'unit': r['unit'], 'bear': disp(r, inputs[r['key']][0]), 'base': disp(r, inputs[r['key']][1]), 'bull': disp(r, inputs[r['key']][2]), 'status': meta[r['key']]['status'], 'source': r['source']} for r in M.ROWS]).to_excel(xw, sheet_name='Inputs', index=False)
         for i, n in enumerate(M.SCN):
-            S[i]['annual'].T.to_excel(xw, f'Annual_{n}'); S[i]['monthly'].to_excel(xw, f'Monthly_{n}', index=False)
+            S[i]['annual'].T.to_excel(xw, sheet_name=f'Annual_{n}'); S[i]['monthly'].to_excel(xw, sheet_name=f'Monthly_{n}', index=False)
     st.download_button('Download results (Excel)', buf.getvalue(), 'trailquest_results.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
