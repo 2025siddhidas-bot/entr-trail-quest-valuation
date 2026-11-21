@@ -42,16 +42,15 @@ def market(p):
     m = {}
     m['pop'] = p['g_pop']; m['elig'] = p['m_elig']; m['eligpop'] = m['pop'] * m['elig']
     m['phone'] = p['m_phone']
-    m['reachA'] = p['m_gamer']; m['reachB'] = p['m_comm']
+    m['reachA'] = p['m_gamer']
     m['hiker'] = p['m_hiker']; m['intend'] = p['m_intend']
     m['reachC'] = m['hiker'] + (1 - m['hiker']) * m['intend']
-    m['tam'] = m['eligpop'] * m['phone'] * (1 - (1 - m['reachA']) * (1 - m['reachB']) * (1 - m['reachC']))
-    m['intA'] = p['m_int_a']; m['intB'] = p['m_int_b']; m['intC'] = p['m_int_c']
+    m['tam'] = m['eligpop'] * m['phone'] * (1 - (1 - m['reachA']) * (1 - m['reachC']))
+    m['intA'] = p['m_int_a']; m['intC'] = p['m_int_c']
     m['poolA'] = m['eligpop'] * m['phone'] * m['reachA'] * m['intA']
-    m['poolB'] = m['eligpop'] * m['phone'] * m['reachB'] * m['intB']
     m['poolC'] = m['eligpop'] * m['phone'] * m['reachC'] * m['intC']
-    m['sam'] = m['eligpop'] * m['phone'] * (1 - (1 - m['reachA'] * m['intA']) * (1 - m['reachB'] * m['intB']) * (1 - m['reachC'] * m['intC']))
-    m['poolsum'] = m['poolA'] + m['poolB'] + m['poolC'] - m['sam']
+    m['sam'] = m['eligpop'] * m['phone'] * (1 - (1 - m['reachA'] * m['intA']) * (1 - m['reachC'] * m['intC']))
+    m['poolsum'] = m['poolA'] + m['poolC'] - m['sam']
     m['uni'] = p['m_uni']; m['unishare'] = m['uni'] / m['sam'] if m['sam'] else 0
     m['maxpen'] = p['m_maxpen']; m['som'] = m['sam'] * m['maxpen']
     m['m0pct'] = p['a_m0']; m['m0'] = m['sam'] * m['m0pct']
@@ -241,7 +240,7 @@ def checks(out, inputs, meta=None):
     add('Exit-year ad share of revenue', [sc[s]['annual'].ad_share[sc[s]['val']['exit_year']] for s in range(3)], 'INFO', 'If low, ads are a minor stream unless price or fill rises')
     add('Advertisers needed in exit year (average)', [sc[s]['annual'].advertisers_needed[sc[s]['val']['exit_year']] for s in range(3)], 'INFO', 'How many retailers must buy')
     if meta is not None:
-        share = sum(1 for k in KEYS if meta[k]['status'] == 'PLACEHOLDER') / len(KEYS)
+        share = sum(1 for k in KEYS if meta[k]['status'] == 'ASSUMPTION') / len(KEYS)
         add('Share of inputs still placeholders', [share] * 3, 'INFO', 'Readiness of the model')
     return C
 
