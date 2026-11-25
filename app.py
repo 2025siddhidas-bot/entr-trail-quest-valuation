@@ -213,7 +213,7 @@ with tabs[0]:
         st.dataframe(t, hide_index=True, use_container_width=True)
     ph = [meta[r['key']]['status'] for r in M.ROWS if r['key'] in SHOWN]
     share = ph.count('ASSUMPTION') / len(ph)
-    st.progress(1 - share, text=f'{ph.count("ASSUMPTION")} of {len(ph)} inputs are still placeholders ({1 - share:.0%} have a source or come from a similar game)')
+    st.progress(1 - share, text=f'{ph.count("ASSUMPTION")} of {len(ph)} inputs are still assumptions ({1 - share:.0%} have a source or come from a similar game)')
 
 # ================================================================ MARKET
 with tabs[2]:
