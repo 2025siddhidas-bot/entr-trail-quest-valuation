@@ -177,7 +177,7 @@ with tabs[0]:
     st.header('What is Trail Quest worth?')
     if fails: st.error('Something in the inputs does not add up: ' + '; '.join(fails))
     with st.container(border=True):
-        st.markdown('**Three tools, each with one job**')
+        st.markdown('**We used three different valuation methodology for the different use cases they are used in. **')
         st.markdown('1. **Funding ask** (bottom-up model): the most cash we burn before earning, in the Base case, plus a buffer. The same model gives LTV : CAC and the month we first make a profit.  \n'
                     '2. **Price** (scorecard method): a market pre-seed median, scaled by how we score on team, market size, product, competition, partnerships and funding need.  \n'
                     '3. **Reality check** (VC method): what our own plan is worth to an investor who wants 50% a year, and the year-5 revenue the price would need. Pre-seed prices bet on beating the plan.')
