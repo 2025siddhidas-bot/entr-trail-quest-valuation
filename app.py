@@ -9,7 +9,9 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+import importlib
 import model as M
+importlib.reload(M)                       # always use the latest model.py after a redeploy
 import proxy_data as PXD
 from spec import SPEC, PARTS, STATUSES, SEAS_DEFAULT
 
@@ -63,6 +65,10 @@ if 'inputs' not in st.session_state:
     st.session_state.meta = M.default_meta()
     st.session_state.seas = list(SEAS_DEFAULT)
     st.session_state.ver = 0
+for _k, _v in M.default_inputs().items():   # add inputs that are new since this browser session started
+    st.session_state.inputs.setdefault(_k, _v)
+for _k, _v in M.default_meta().items():
+    st.session_state.meta.setdefault(_k, _v)
 inputs, meta = st.session_state.inputs, st.session_state.meta
 
 
