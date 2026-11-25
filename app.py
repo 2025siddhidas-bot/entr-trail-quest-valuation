@@ -174,7 +174,7 @@ def fig(title, h=340):
 
 # ================================================================ DASHBOARD
 with tabs[0]:
-    st.header('HK Trail Quest')
+    st.header('Trail Quest Valuation and Funding Ask')
     if fails: st.error('Something in the inputs does not add up: ' + '; '.join(fails))
     with st.container(border=True):
         st.markdown('**We used three different valuation methodology for the different use cases they are used in.**')
