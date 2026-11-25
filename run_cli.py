@@ -28,7 +28,7 @@ def main():
         meta = {k: d['meta'].get(k, v) for k, v in meta.items()}
         seas = d.get('seas', seas)
     out = M.run_all(inputs, seas, meta)
-    rows = ['rev5', 'ebit5', 'mau5', 'peak', 'post1', 'post2', 'post3', 'npv', 'npvt', 'reqrev']
+    rows = ['ask', 'peak', 'ltv_cac', 'pre5usd', 'stake_sc', 'rev5', 'mau5', 'post1', 'rev_needed']
     t = pd.DataFrame({n: {k: out['scn'][i]['val'][k] for k in rows} for i, n in enumerate(M.SCN)})
     t['Weighted'] = [out['weighted'].get(k, float('nan')) for k in rows]
     pd.set_option('display.float_format', '{:,.0f}'.format)
