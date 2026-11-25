@@ -22,7 +22,7 @@ YEARS = [f'Year {y}' for y in range(1, NY + 1)]
 # key: (plain label, unit shown)
 SHOWN = {
     # Part 1
-    'g_raise': ('Money we are raising', 'HK$'),
+    'g_buffer': ('Cash buffer on top of the Base peak funding need', '%'),
     'a_m0': ('Installs in the launch month, as % of the people we can reach', '%'),
     's1_d30': ('Planners: % of new users still active after 30 days', '%'),
     's2_d30': ('Players: % of new users still active after 30 days', '%'),
@@ -38,7 +38,7 @@ SHOWN = {
     's3_mix': ('Share of new installs who are community-seekers', '%'),
     # Part 3
     'x_a_ratio': ('Taiwan: how many times bigger than Hong Kong', 'x'),
-    'x_b_ratio': ('Japan, Korea, Singapore and Greater Bay Area: how many times bigger than Hong Kong', 'x'),
+    'x_b_ratio': ('Japan, Korea and Singapore: how many times bigger than Hong Kong', 'x'),
     # Part 4
     'r_cpc': ('Price an advertiser pays per click', 'HK$'),
     'r_ctr': ('% of ad views that get clicked', '%'),
@@ -171,23 +171,25 @@ with tabs[0]:
     st.header('What is Trail Quest worth?')
     if fails: st.error('Something in the inputs does not add up: ' + '; '.join(fails))
     with st.container(border=True):
-        st.markdown('**Valuation method: the VC method** (how venture investors usually value a young company)')
-        st.markdown('Based on answering *what could this company be sold for in 5 years, and what is it worth today so that I earn the return I expect?* '
-                    'So we (1) forecast our revenue in year 5, (2) multiply it by what similar companies sell for as a multiple of yearly revenue, '
-                    '(3) take off the share that future investors will own, and (4) scale the result back to today at the return investors expect (60% a year). '
-                    'The 60% already covers the risk that the company fails, so each case below describes the company **succeeding**, not failing.')
-        st.markdown('**What the forecast is anchored to:** Pokemon Go at its peak (232M monthly users in 2016, about 8.9% of the world\'s mobile gamers, and roughly US$1B of revenue that year). '
-                    'Bull: in its best month, Trail Quest gets 8.9% of mobile gamers in Hong Kong to play. The same uptake per person is assumed in Taiwan, Japan, Korea, Singapore and the Greater Bay Area. Base and Bear: the same idea, but a smaller share of gamers. Base reaches 7.5% in Hong Kong and Bear 6%.')
-    st.caption('Bear = smaller success, Base = solid success, Bull = Pokemon Go-scale success. Numbers use placeholder inputs until the team fills in the Inputs tab.')
+        st.markdown('**Three tools, each with one job**')
+        st.markdown('1. **Funding ask** (bottom-up model): the most cash we burn before earning, in the Base case, plus a buffer. The same model gives LTV : CAC and the month we first make a profit.  \n'
+                    '2. **Price** (scorecard method): a market pre-seed median, scaled by how we score on team, market size, product, competition, partnerships and funding need.  \n'
+                    '3. **Reality check** (VC method): what our own plan is worth to an investor who wants 50% a year, and the year-5 revenue the price would need. Pre-seed prices bet on beating the plan.')
+    st.caption('Bear = smaller success, Base = solid success, Bull = Pokemon Go-scale success.')
+    fx = inputs['g_fx'][1]
+    st.metric('Funding ask this round (HK$)', money(S[1]['val']['ask']))
     c = st.columns(3)
     for i, n in enumerate(M.SCN):
         v = S[i]['val']
         with c[i]:
             with st.container(border=True):
                 st.markdown(f'**{n}**')
-                st.metric('Company value today (US$)', usdm(v['post1'], inputs['g_fx'][1]))
-                st.caption(f"HK${money(v['post1'])}  \nRevenue in year 5: {usdm(v['rev5'], inputs['g_fx'][1])}  \nActive users in year 5: {money(v['mau5'])}  \nBest month in Hong Kong: {S[i]['monthly'].mau_hk.max() / (S[i]['market']['eligpop'] * S[i]['market']['phone'] * S[i]['market']['reachA']):.1%} of gamers (Pokemon Go peak: 8.9%)")
-   
+                st.metric('Price: pre-money value, scorecard (US$)', usdm(v['pre5'], fx))
+                st.caption(f"Investor stake for the ask: {v['stake_sc']:.1%}  \nLTV : CAC: {v['ltv_cac']:.1f}x  \n"
+                           f"First profit: {('month ' + str(v['first_profit_month'])) if v['first_profit_month'] else 'none'}  \n"
+                           f"Money needed before earning: HK${money(v['peak'])}{'' if v['ask_covers'] else ' (more than the ask)'}  \n"
+                           f"Revenue in year 5: HK${money(v['rev5'])}  \nActive users in year 5: {money(v['mau5'])}  \n"
+                           f"Reality check, VC method: {usdm(v['post1'], fx)} today on our own plan; the price needs HK${money(v['rev_needed'])} of year-5 revenue ({v['rev_gap']:.1f}x the projection)")
     g1, g2 = st.columns(2)
     f = fig('Revenue by year (HK$)')
     for i, n in enumerate(M.SCN): f.add_bar(x=YEARS, y=S[i]['annual'].revenue[1:NY + 1], name=n, marker_color=COL[n])
@@ -195,13 +197,13 @@ with tabs[0]:
     f = fig('Average active users by year')
     for i, n in enumerate(M.SCN): f.add_scatter(x=YEARS, y=S[i]['annual'].mau_total[1:NY + 1], name=n, line=dict(color=COL[n]))
     g2.plotly_chart(f, use_container_width=True)
-    with st.expander('How the company value is calculated, step by step'):
+    with st.expander('Reality check: the VC method, step by step'):
         rows_ = [('1. Revenue in year 5 (HK$)', 'rev5', 'n'), ('2. Sale multiple (what similar companies sell for, as a multiple of yearly revenue)', 'mult', 'x'),
                  ('3. Value of the company if sold in year 5 (1 x 2)', 'ev1', 'n')]
-        t = pd.DataFrame({'Step': [r[0] for r in rows_] + ['4. Share owned by future investors (reduces what today\'s investors keep)', '5. Value kept by today\'s investors in year 5 (3 less 4)', '6. Growth factor needed to give investors their 60% a year over 5 years', '7. Company value today (5 divided by 6)', '   In US$']})
+        t = pd.DataFrame({'Step': [r[0] for r in rows_] + ['4. Share owned by future investors (reduces what today\'s investors keep)', '5. Value kept by today\'s investors in year 5 (3 less 4)', '6. Growth factor needed to give investors their target return over 5 years', '7. Value today on our own plan (5 divided by 6)', '   In US$']})
         for i, n in enumerate(M.SCN):
             v = S[i]['val']
-            t[n] = [money(v['rev5']), f"{v['mult']:.1f}x", money(v['ev1']), f"{v['dil']:.0%}", money(v['ev1'] * (1 - v['dil'])), f"{(1 + v['irr']) ** v['exit_year']:.1f}x", money(v['post1']), usdm(v['post1'], inputs['g_fx'][1])]
+            t[n] = [money(v['rev5']), f"{v['mult']:.2f}x", money(v['ev1']), f"{v['dil']:.0%}", money(v['ev1'] * (1 - v['dil'])), f"{(1 + v['irr']) ** v['exit_year']:.1f}x", money(v['post1']), usdm(v['post1'], inputs['g_fx'][1])]
         st.dataframe(t, hide_index=True, use_container_width=True)
     ph = [meta[r['key']]['status'] for r in M.ROWS if r['key'] in SHOWN]
     share = ph.count('ASSUMPTION') / len(ph)
@@ -246,7 +248,7 @@ with tabs[3]:
     st.subheader('Average active users per year')
     u = pd.DataFrame({n: S[i]['annual'].mau_total.values[1:NY + 1] for i, n in enumerate(M.SCN)}, index=YEARS)
     st.dataframe(u.style.format('{:,.0f}'), use_container_width=True)
-    st.caption('Hong Kong plus the later launches in other markets (Taiwan, Japan/Korea/Singapore/Greater Bay Area).')
+    st.caption('Hong Kong plus the later launches in other markets (Taiwan, Japan/Korea/Singapore).')
 
 # ================================================================ REVENUE
 with tabs[4]:
@@ -255,7 +257,7 @@ with tabs[4]:
     A = S[sidx]['annual']
     c1, c2 = st.columns(2)
     f = fig(f'{detail}: revenue by source (HK$)')
-    for nm, col in (('Ads', 'ad_hk'), ('In-app purchases', 'iap_hk'), ('Partnerships', 'institutional'), ('Other markets: Taiwan', 'exp_a'), ('Other markets: Japan, Korea, Singapore, GBA', 'exp_b')): f.add_bar(x=YEARS, y=A[col].values[1:NY + 1], name=nm)
+    for nm, col in (('Ads', 'ad_hk'), ('In-app purchases', 'iap_hk'), ('Partnerships', 'institutional'), ('Other markets: Taiwan', 'exp_a'), ('Other markets: Japan, Korea, Singapore', 'exp_b')): f.add_bar(x=YEARS, y=A[col].values[1:NY + 1], name=nm)
     f.update_layout(barmode='stack'); c1.plotly_chart(f, use_container_width=True)
     f = fig('Total revenue per month (HK$)'); _ = [f.add_scatter(x=S[i]['monthly'].month, y=S[i]['monthly'].revenue, name=n, line=dict(color=COL[n])) for i, n in enumerate(M.SCN)]
     c2.plotly_chart(f, use_container_width=True)
@@ -274,8 +276,8 @@ with tabs[5]:
     f = fig(f'{detail}: revenue vs costs (HK$)'); f.add_bar(x=YEARS, y=A.revenue.values[1:NY + 1], name='Revenue', marker_color='#2E8B57'); f.add_bar(x=YEARS, y=A.costs.values[1:NY + 1], name='Costs', marker_color='#C0504D')
     c1.plotly_chart(f, use_container_width=True)
     f = fig('Cash balance by month (HK$): how much money we need'); _ = [f.add_scatter(x=S[i]['monthly'].month, y=S[i]['monthly'].cum_cash, name=n, line=dict(color=COL[n])) for i, n in enumerate(M.SCN)]
-    f.add_hline(y=-inputs['g_raise'][1], line_dash='dash', annotation_text='Money we are raising'); c2.plotly_chart(f, use_container_width=True)
-    st.caption('The dashed line is the money we plan to raise. A line that drops below it means we would run out of cash before that point.')
+    f.add_hline(y=-S[1]['val']['ask'], line_dash='dash', annotation_text='Funding ask'); c2.plotly_chart(f, use_container_width=True)
+    st.caption('The dashed line is the funding ask (Base peak need plus buffer). A line that drops below it means we would run out of cash before that point.')
     st.subheader(f'{detail}: summary by year (HK$)')
     s_ = pd.DataFrame({'Revenue': A.revenue.values[1:NY + 1], 'Costs': A.costs.values[1:NY + 1], 'Profit or loss': A.ebit.values[1:NY + 1], 'Cash position at year end': A.cum_cash_flow.values[1:NY + 1]}, index=YEARS).T
     st.dataframe(s_.style.format('{:,.0f}'), use_container_width=True)
@@ -305,7 +307,7 @@ with tabs[7]:
     st.header('Export')
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine='openpyxl') as xw:
-        pd.DataFrame({n: {'Company value today (HK$)': S[i]['val']['post1'], 'Company value today (US$)': S[i]['val']['post1'] / inputs['g_fx'][1], 'Revenue in year 5 (HK$)': S[i]['val']['rev5'], 'Active users in year 5': S[i]['val']['mau5']} for i, n in enumerate(M.SCN)}).to_excel(xw, sheet_name='Summary')
+        pd.DataFrame({n: {'Funding ask (HK$)': S[i]['val']['ask'], 'Price: pre-money, scorecard (US$)': S[i]['val']['pre5usd'], 'Investor stake for the ask': S[i]['val']['stake_sc'], 'LTV : CAC': S[i]['val']['ltv_cac'], 'Money needed before earning (HK$)': S[i]['val']['peak'], 'Revenue in year 5 (HK$)': S[i]['val']['rev5'], 'Active users in year 5': S[i]['val']['mau5'], 'Reality check: value on our own plan, VC method (US$)': S[i]['val']['post1'] / inputs['g_fx'][1], 'Year-5 revenue needed for the price (HK$)': S[i]['val']['rev_needed']} for i, n in enumerate(M.SCN)}).to_excel(xw, sheet_name='Summary')
         pd.DataFrame([{'key': r['key'], 'parameter': r['label'], 'unit': r['unit'], 'bear': disp(r, inputs[r['key']][0]), 'base': disp(r, inputs[r['key']][1]), 'bull': disp(r, inputs[r['key']][2]), 'status': meta[r['key']]['status'], 'source': r['source']} for r in M.ROWS]).to_excel(xw, sheet_name='Inputs', index=False)
         for i, n in enumerate(M.SCN):
             S[i]['annual'].T.to_excel(xw, sheet_name=f'Annual_{n}'); S[i]['monthly'].to_excel(xw, sheet_name=f'Monthly_{n}', index=False)
