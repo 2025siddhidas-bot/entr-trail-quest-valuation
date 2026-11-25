@@ -191,6 +191,30 @@ def valuation(p, A, df, mk):
     return v
 
 
+def unit_economics(df, p):
+    """LTV and CAC per Hong Kong install over the full horizon (same formula as Excel Valuation rows 15-17)."""
+    inst = df.new_installs.sum()
+    ltv = (df.ad_rev.sum() + df.iap_net.sum() - p['c_cloudm'] * df.mau_hk.sum() - p['c_sales'] * df.ad_rev.sum()) / inst if inst else 0.0
+    cac = (df.c_ua.sum() + df.c_events.sum()) / inst if inst else 0.0
+    return ltv, cac, (ltv / cac if cac else 0.0)
+
+
+def funding_and_price(out):
+    """Funding ask from the Base peak need + buffer; scorecard price; VC-method reality check (Excel Valuation sheet)."""
+    base = out['scn'][1]
+    ask = math.ceil(base['val']['peak'] * (1 + base['p']['g_buffer']) / 1e5) * 1e5
+    for r in out['scn']:
+        v, p = r['val'], r['p']
+        v['ask'] = ask; v['ask_covers'] = ask >= v['peak']
+        v['ltv'], v['cac'], v['ltv_cac'] = unit_economics(r['monthly'], p)
+        v['post_sc'] = v['pre5'] + ask; v['stake_sc'] = ask / v['post_sc'] if v['post_sc'] > 0 else np.nan
+        v['rev_needed'] = v['post_sc'] * (1 + v['irr']) ** v['exit_year'] / (1 - v['dil']) / v['mult']
+        v['rev_gap'] = v['rev_needed'] / v['rev5'] if v['rev5'] > 0 else np.nan
+    w = out['weights']
+    for k in ('post_sc', 'rev_needed'):
+        out['weighted'][k] = sum(w[s] * out['scn'][s]['val'][k] for s in range(3))
+
+
 WEIGHTED_KEYS = ['pre5', 'post5', 'pre5usd', 'post5usd', 'rev5', 'ebit5', 'mau5', 'peak', 'gap', 'ev1', 'post1', 'pre1', 'ev2', 'post2', 'pre2', 'rev3', 'ev3', 'post3', 'pre3', 'npv', 'tv', 'npvt', 'usd1', 'usd3']
 
 
@@ -214,6 +238,7 @@ def run_all(inputs, seas=None, meta=None):
     w = [out['scn'][s]['p']['p_w'] for s in range(3)]
     out['weights'] = w
     out['weighted'] = {k: sum(w[s] * out['scn'][s]['val'][k] for s in range(3)) for k in WEIGHTED_KEYS}
+    funding_and_price(out)
     out['checks'] = checks(out, inputs, meta)
     return out
 
